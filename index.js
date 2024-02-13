@@ -2,6 +2,7 @@ const pg = require('pg');
 const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/acme_notes_db');
 const express = require('express');
 const app = express();
+app.use(express.json());
 
 app.get('/api/notes', async(req, res, next)=> {
     try {
@@ -18,6 +19,26 @@ app.get('/api/notes', async(req, res, next)=> {
     }
 });
 
+app.post('/api/notes', async(req, res, next)=> {
+    try {
+        const SQL = `
+            INSERT INTO notes(txt, ranking)
+            VALUES($1, $2)
+            RETURNING *
+        `;
+        const response = await client.query(SQL, [req.body.txt, req.body.ranking]);
+        res.send(response.rows);
+        
+    }
+    catch(ex){
+        next(ex); 
+    }
+});
+
+app.use((err, req, res, next)=> {
+    res.status(err.status || 500).send({ error: err.message || err});
+});
+
 
 const init = async()=> {
     console.log('connecting to database');
@@ -27,8 +48,8 @@ const init = async()=> {
         DROP TABLE IF EXISTS notes;
         CREATE TABLE notes(
             id SERIAL PRIMARY KEY,
-            txt VARCHAR(200),
-            ranking INTEGER DEFAULT 5,
+            txt VARCHAR(200) NOT NULL,
+            ranking INTEGER DEFAULT 5 NOT NULL,
             created_at TIMESTAMP DEFAULT now(),
             updated_at TIMESTAMP DEFAULT now()
         );
