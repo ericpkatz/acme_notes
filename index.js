@@ -35,6 +35,20 @@ app.post('/api/notes', async(req, res, next)=> {
     }
 });
 
+app.delete('/api/notes/:id', async(req, res, next)=> {
+    try {
+        const SQL = `
+            DELETE FROM notes
+            WHERE id = $1
+        `;
+        await client.query(SQL, [req.params.id]);
+        res.sendStatus(204);
+    }
+    catch(ex){
+        next(ex); 
+    }
+});
+
 app.use((err, req, res, next)=> {
     res.status(err.status || 500).send({ error: err.message || err});
 });
