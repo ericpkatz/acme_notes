@@ -27,7 +27,7 @@ app.post('/api/notes', async(req, res, next)=> {
             RETURNING *
         `;
         const response = await client.query(SQL, [req.body.txt, req.body.ranking]);
-        res.send(response.rows);
+        res.status(201).send(response.rows[0]);
         
     }
     catch(ex){
@@ -43,6 +43,22 @@ app.delete('/api/notes/:id', async(req, res, next)=> {
         `;
         await client.query(SQL, [req.params.id]);
         res.sendStatus(204);
+    }
+    catch(ex){
+        next(ex); 
+    }
+});
+
+app.put('/api/notes/:id', async(req, res, next)=> {
+    try {
+        const SQL = `
+            UPDATE notes
+            SET txt=$1, ranking=$2, updated_at=now()
+            WHERE id = $3
+            RETURNING *
+        `;
+        const response = await client.query(SQL, [req.body.txt, req.body.ranking, req.params.id]);
+        res.send(response.rows[0]);
     }
     catch(ex){
         next(ex); 
